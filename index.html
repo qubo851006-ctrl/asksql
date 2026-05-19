@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大屏问数 MVP</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#f4f6f8;color:#172033;font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif}
+button,textarea{font:inherit}button{border:0}
+header{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center;padding:14px 32px;background:#fff;border-bottom:1px solid #dfe5ee}
+.brand{display:flex;gap:12px;align-items:center;min-width:0}.brand-mark{display:inline-flex;width:38px;height:32px;align-items:center;justify-content:center;border-radius:8px;background:#163b73;color:#fff;font-size:12px;font-weight:800}.brand-name{font-size:18px;line-height:1.25;font-weight:800}.brand-sub{margin-top:2px;color:#667085;font-size:13px}
+.header-status{display:flex;gap:8px;align-items:center;color:#475467;font-size:12px}.header-status span,.scope-chip,.plan-bar span{display:inline-flex;align-items:center;min-height:26px;padding:3px 9px;border:1px solid #d0d7e2;border-radius:6px;background:#f8fafc}
+main{width:min(1080px,calc(100vw - 40px));margin:0 auto;padding:28px 0 40px;display:flex;flex-direction:column;gap:18px}
+.scope-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:#475467;font-size:13px}.scope-label{margin-right:2px;color:#667085}.scope-chip{background:#fff;color:#1d4f8f}
+.input-card,.result-card,.example-group,.history-item{background:#fff;border:1px solid #dfe5ee;border-radius:8px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.input-card{padding:16px}.input-card label{display:block;margin-bottom:10px;color:#344054;font-size:13px;font-weight:700}.input-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+textarea{width:100%;min-height:92px;padding:12px;resize:vertical;border:1px solid #cfd7e3;border-radius:8px;color:#172033;background:#fbfcfe;line-height:1.65;outline:none}textarea:focus{border-color:#2f6fcf;box-shadow:0 0 0 3px rgba(47,111,207,.12)}textarea::placeholder{color:#98a2b3}
+.btn-primary,.btn-ghost,.chip,.history-item{cursor:pointer}.btn-primary{min-width:92px;height:42px;padding:0 22px;border-radius:8px;background:#1d5fbf;color:#fff;font-size:15px;font-weight:700}.btn-primary:hover:not(:disabled){background:#164d9d}.btn-primary:disabled,.chip:disabled{cursor:not-allowed;opacity:.55}
+.btn-ghost{height:34px;padding:0 14px;border:1px solid #cfd7e3;border-radius:8px;background:#fff;color:#344054;font-size:13px}.btn-ghost:hover{background:#f4f6f8}.btn-ghost.sm{height:28px;padding:0 10px;border-radius:6px;font-size:12px}
+.examples{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.example-group{padding:12px}.example-title{margin-bottom:10px;color:#344054;font-size:13px;font-weight:800}.example-chips{display:flex;flex-direction:column;gap:8px}.chip{width:100%;padding:8px 10px;border:1px solid #d0d7e2;border-radius:6px;background:#f8fafc;color:#23405f;font-size:13px;line-height:1.45;text-align:left}.chip:hover:not(:disabled){border-color:#8ab4eb;background:#eef6ff}
+.result-card{display:none;overflow:hidden}.result-card.visible{display:block}.summary-box{display:flex;gap:12px;align-items:flex-start;padding:15px 16px;background:#f7fbff;border-bottom:1px solid #dfe5ee}.summary-label,.error-tag{flex:0 0 auto;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:800}.summary-label{background:#dbeafe;color:#164d9d}.summary-text{color:#172033;font-size:15px;line-height:1.7}
+.plan-bar{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px;border-bottom:1px solid #edf1f6;background:#fff;color:#475467;font-size:12px}.plan-bar span{background:#f7f9f5;border-color:#d7dfce;color:#39533b}
+.sql-block{border-bottom:1px solid #edf1f6}.sql-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:#fbfcfe;color:#667085;font-size:12px;font-weight:800}.sql-code{margin:0;padding:12px 16px;background:#fff8eb;color:#6d3d00;font-family:"Cascadia Code","Consolas",monospace;font-size:13px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.table-wrap{max-height:440px;overflow:auto}.result-meta{padding:10px 16px;color:#667085;font-size:13px;border-bottom:1px solid #edf1f6}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px 14px;border-bottom:1px solid #edf1f6;text-align:left;white-space:nowrap}th{position:sticky;top:0;z-index:1;background:#f8fafc;color:#344054;font-weight:800}td{color:#172033}tr:hover td{background:#fbfcfe}
+.error-box{display:flex;gap:10px;align-items:flex-start;padding:16px;color:#b42318;font-size:14px}.error-tag{background:#fee4e2;color:#b42318}.empty-tip{padding:28px 16px;color:#667085;text-align:center;font-size:14px}
+#historySection{display:none}.history-title{color:#667085;font-size:12px;font-weight:800}.history-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}.history-item{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;width:100%;padding:10px 14px;text-align:left}.history-item:hover{background:#fbfcfe}.history-q{min-width:0;overflow:hidden;color:#344054;font-size:14px;text-overflow:ellipsis;white-space:nowrap}.history-meta{color:#667085;font-size:12px}
+.schema-panel{display:none;max-height:360px;overflow:auto;padding:18px 32px;background:#111827;color:#d1d5db;border-bottom:1px solid #0b1220}.schema-panel.visible{display:block}.schema-panel pre{margin:0;font-family:"Cascadia Code","Consolas",monospace;font-size:13px;line-height:1.7;white-space:pre-wrap}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:900px){header{grid-template-columns:1fr;align-items:start;padding:14px 20px}.header-status{flex-wrap:wrap}main{width:min(100vw - 24px,1080px);padding-top:18px}.input-row,.history-item{grid-template-columns:1fr}.btn-primary{width:100%}.examples{grid-template-columns:1fr}th,td{padding:9px 10px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="brand-mark">SQL</span>
+    <div>
+      <div class="brand-name">大屏问数</div>
+      <div class="brand-sub">只读查询 · 指标结果表 · 2026年1-4月</div>
+    </div>
+  </div>
+  <div class="header-status" aria-label="系统状态">
+    <span>MariaDB</span>
+    <span>只读</span>
+    <span>4个模块</span>
+  </div>
+  <button class="btn-ghost" id="schemaBtn" onclick="toggleSchema()">查看数据范围</button>
+</header>
+<div class="schema-panel" id="schemaPanel"><pre id="schemaText">加载中...</pre></div>
+<main>
+  <section class="scope-strip" aria-label="可问模块">
+    <span class="scope-label">当前可问</span>
+    <span class="scope-chip">两利四率</span>
+    <span class="scope-chip">物业租赁</span>
+    <span class="scope-chip">物业服务</span>
+    <span class="scope-chip">酒店项目</span>
+  </section>
+
+  <section class="input-card">
+    <label for="question">输入问题</label>
+    <div class="input-row">
+      <textarea id="question" rows="3" placeholder="例如：2026年4月酒店客房营收排名，按 Enter 发送，Shift+Enter 换行" onkeydown="handleKey(event)"></textarea>
+      <button class="btn-primary" id="queryBtn" onclick="doQuery()">查询</button>
+    </div>
+  </section>
+
+  <section class="examples" id="examples" aria-label="示例问题"></section>
+
+  <section class="result-card" id="resultCard">
+    <div class="summary-box" id="summaryBox" style="display:none">
+      <span class="summary-label">回答</span>
+      <span class="summary-text" id="summaryText"></span>
+    </div>
+    <div class="plan-bar" id="planBar" style="display:none"></div>
+    <div class="sql-block" id="sqlBlock">
+      <div class="sql-header">
+        <span>执行的白名单 SQL</span>
+        <button class="btn-ghost sm" id="sqlToggle" onclick="toggleSql()">收起</button>
+      </div>
+      <pre class="sql-code" id="sqlCode"></pre>
+    </div>
+    <div id="resultBody"></div>
+  </section>
+
+  <section id="historySection">
+    <div class="history-title">历史查询</div>
+    <div class="history-list" id="historyList"></div>
+  </section>
+</main>
+
+<script>
+const BASE = "http://localhost:8100";
+const EXAMPLE_GROUPS = [
+  { title: "物业租赁", items: ["2026年4月物业租赁总租赁面积是多少？", "2026年4月物业租赁累计欠缴是多少？"] },
+  { title: "酒店项目", items: ["4月酒店客房营收排名", "北京中航泊悦酒店4月出租率是多少？"] },
+  { title: "物业服务", items: ["物业服务投诉量是多少？", "4月物业服务报事报修数量是多少？"] },
+  { title: "两利四率", items: ["2026年4月利润总额是多少？", "2026年4月资金存量是多少？", "2026年4月应收账款逾期应收是多少？"] },
+];
+
+let history = [];
+let sqlVisible = true;
+let schemaLoaded = false;
+let schemaVisible = false;
+
+const examples = document.getElementById("examples");
+EXAMPLE_GROUPS.forEach((group) => {
+  const box = document.createElement("div");
+  box.className = "example-group";
+  box.innerHTML = `<div class="example-title">${escHtml(group.title)}</div><div class="example-chips"></div>`;
+  const chips = box.querySelector(".example-chips");
+  group.items.forEach((question) => {
+    const button = document.createElement("button");
+    button.className = "chip";
+    button.textContent = question;
+    button.onclick = () => doQuery(question);
+    chips.appendChild(button);
+  });
+  examples.appendChild(box);
+});
+
+function handleKey(event) {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    doQuery();
+  }
+}
+
+async function toggleSchema() {
+  schemaVisible = !schemaVisible;
+  document.getElementById("schemaPanel").classList.toggle("visible", schemaVisible);
+  document.getElementById("schemaBtn").textContent = schemaVisible ? "隐藏数据范围" : "查看数据范围";
+
+  if (schemaVisible && !schemaLoaded) {
+    try {
+      const response = await fetch(BASE + "/api/schema");
+      const data = await response.json();
+      document.getElementById("schemaText").textContent = data.schema;
+      schemaLoaded = true;
+    } catch (error) {
+      document.getElementById("schemaText").textContent = "加载失败：" + error.message;
+    }
+  }
+}
+
+function toggleSql() {
+  sqlVisible = !sqlVisible;
+  document.getElementById("sqlCode").style.display = sqlVisible ? "" : "none";
+  document.getElementById("sqlToggle").textContent = sqlVisible ? "收起" : "展开";
+}
+
+async function doQuery(question) {
+  const textarea = document.getElementById("question");
+  const text = (question !== undefined ? question : textarea.value).trim();
+  if (!text) return;
+
+  textarea.value = text;
+  const button = document.getElementById("queryBtn");
+  button.disabled = true;
+  button.innerHTML = '<span class="spinner"></span>';
+  document.getElementById("resultCard").classList.remove("visible");
+
+  try {
+    const response = await fetch(BASE + "/api/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: text }),
+    });
+    const data = await response.json();
+    showResult(data);
+    addHistory(text, data);
+  } catch (error) {
+    showResult({ sql: "", columns: [], rows: [], row_count: 0, error: "请求失败：" + error.message });
+  } finally {
+    button.disabled = false;
+    button.textContent = "查询";
+  }
+}
+
+function showResult(data) {
+  document.getElementById("resultCard").classList.add("visible");
+  renderSummary(data);
+  renderPlan(data);
+  renderSql(data);
+  renderTable(data);
+}
+
+function renderSummary(data) {
+  const box = document.getElementById("summaryBox");
+  const text = document.getElementById("summaryText");
+  if (data.summary && !data.error) {
+    text.textContent = data.summary;
+    box.style.display = "flex";
+  } else {
+    box.style.display = "none";
+  }
+}
+
+function renderPlan(data) {
+  const bar = document.getElementById("planBar");
+  if (!data.plan || data.error) {
+    bar.style.display = "none";
+    bar.innerHTML = "";
+    return;
+  }
+
+  const fields = [
+    data.plan.module_name,
+    data.plan.target_name,
+    data.plan.target_key,
+    formatPeriod(data.plan.period),
+  ].filter(Boolean);
+  bar.innerHTML = fields.map((item) => `<span>${escHtml(item)}</span>`).join("");
+  bar.style.display = fields.length ? "flex" : "none";
+}
+
+function renderSql(data) {
+  const block = document.getElementById("sqlBlock");
+  if (!data.sql) {
+    block.style.display = "none";
+    return;
+  }
+
+  document.getElementById("sqlCode").textContent = data.sql;
+  block.style.display = "";
+  sqlVisible = true;
+  document.getElementById("sqlCode").style.display = "";
+  document.getElementById("sqlToggle").textContent = "收起";
+}
+
+function renderTable(data) {
+  const body = document.getElementById("resultBody");
+  if (data.error) {
+    body.innerHTML = `<div class="error-box"><span class="error-tag">错误</span><span>${escHtml(data.error)}</span></div>`;
+    return;
+  }
+
+  if (data.row_count === 0) {
+    body.innerHTML = '<div class="empty-tip">查询成功，暂无数据</div>';
+    return;
+  }
+
+  let html = `<div class="result-meta">共 ${data.row_count} 条结果</div><div class="table-wrap"><table><thead><tr>`;
+  data.columns.forEach((column) => {
+    html += `<th>${escHtml(column)}</th>`;
+  });
+  html += "</tr></thead><tbody>";
+  data.rows.forEach((row) => {
+    html += "<tr>";
+    row.forEach((cell) => {
+      html += `<td>${cell !== null && cell !== undefined ? escHtml(String(cell)) : "-"}</td>`;
+    });
+    html += "</tr>";
+  });
+  html += "</tbody></table></div>";
+  body.innerHTML = html;
+}
+
+function addHistory(question, data) {
+  history.unshift({ question, data, time: new Date().toLocaleTimeString() });
+  if (history.length > 20) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const section = document.getElementById("historySection");
+  const list = document.getElementById("historyList");
+  section.style.display = history.length ? "block" : "none";
+  list.innerHTML = history.map((item, index) => `
+    <button class="history-item" onclick="restoreHistory(${index})">
+      <span class="history-q">${escHtml(item.question)}</span>
+      <span class="history-meta">${item.time} · ${item.data.error ? "错误" : item.data.row_count + " 条"}</span>
+    </button>
+  `).join("");
+}
+
+function restoreHistory(index) {
+  const item = history[index];
+  document.getElementById("question").value = item.question;
+  showResult(item.data);
+}
+
+function formatPeriod(period) {
+  if (!period) return "";
+  const match = String(period).match(/^(\d{4})(\d{2})\d{2}-/);
+  if (!match) return period;
+  return `${match[1]}年${Number(match[2])}月`;
+}
+
+function escHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+</script>
+</body>
+</html>
