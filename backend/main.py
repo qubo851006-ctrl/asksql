@@ -6,9 +6,11 @@ Start:
     python -m uvicorn main:app --host 0.0.0.0 --port 8100
 """
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from db import execute_query, test_connection
@@ -16,6 +18,8 @@ from qa_engine import answer_question, load_dictionary
 
 
 _schema_cache = ""
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+INDEX_HTML = PROJECT_ROOT / "index.html"
 
 
 @asynccontextmanager
@@ -48,6 +52,13 @@ class QueryRequest(BaseModel):
 
 class SqlRequest(BaseModel):
     sql: str
+
+
+@app.get("/")
+async def index_page():
+    if not INDEX_HTML.exists():
+        raise HTTPException(status_code=404, detail="index.html not found")
+    return FileResponse(INDEX_HTML)
 
 
 @app.get("/api/schema")

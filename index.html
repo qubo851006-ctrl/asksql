@@ -89,7 +89,7 @@ textarea{width:100%;min-height:92px;padding:12px;resize:vertical;border:1px soli
 </main>
 
 <script>
-const BASE = "http://localhost:8100";
+const BASE = location.protocol === "file:" ? "http://localhost:8100" : location.origin;
 const EXAMPLE_GROUPS = [
   { title: "物业租赁", items: ["2026年4月物业租赁总租赁面积是多少？", "2026年4月物业租赁累计欠缴是多少？"] },
   { title: "酒店项目", items: ["4月酒店客房营收排名", "北京中航泊悦酒店4月出租率是多少？"] },
